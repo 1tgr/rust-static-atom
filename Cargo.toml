@@ -1,0 +1,16 @@
+[package]
+name = "static-atom"
+version = "0.1.0"
+authors = ["Tim Robinson <tim.g.robinson@gmail.com>"]
+
+[dependencies]
+phf = "0.7"
+phf_macros = "0.7"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+
+[profile.bench]
+codegen-units = 1
+lto = "fat"
