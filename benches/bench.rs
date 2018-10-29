@@ -1,14 +1,21 @@
 #![feature(plugin)]
-#![feature(test)]
 #![plugin(phf_macros)]
 
 extern crate phf;
-extern crate test;
+
+#[macro_use]
+extern crate criterion;
+
+#[macro_use]
+extern crate static_map;
+
+#[macro_use]
+extern crate static_map_macros;
 
 use std::mem;
 use std::num::NonZeroU8;
 
-use test::Bencher;
+use criterion::Criterion;
 
 fn read<'a, T: Eq>(s: &mut &'a [T]) -> Option<&'a T> {
     if let Some(b) = s.get(0) {
@@ -194,10 +201,21 @@ fn phf(s: &str) -> Option<NonZeroU8> {
     TOKENS.get(s).cloned()
 }
 
+fn static_map(s: &str) -> Option<NonZeroU8> {
+    static TOKENS: static_map::Map<&'static str, NonZeroU8> = static_map! {
+        Default: ONE,
+        "BTC-EUR" => ONE,
+        "ETH-EUR" => TWO,
+        "ETH-BTC" => THREE,
+    };
+
+    TOKENS.get(s).cloned()
+}
+
 fn assert_eq<T: std::fmt::Debug + Eq>(a: T, b: T) {
     assert_eq!(a, b);
-    test::black_box(a);
-    test::black_box(b);
+    criterion::black_box(a);
+    criterion::black_box(b);
 }
 
 fn test(parser: impl Fn(&str) -> Option<NonZeroU8>) {
@@ -209,27 +227,14 @@ fn test(parser: impl Fn(&str) -> Option<NonZeroU8>) {
     assert_eq(None, parser("ETH-EURzzz"));
 }
 
-#[bench]
-fn bench_match_keyword(b: &mut Bencher) {
-    b.iter(|| test(match_keyword));
+fn bench(c: &mut Criterion) {
+    c.bench_function("match_keyword", |b| b.iter(|| test(match_keyword)));
+    c.bench_function("phf", |b| b.iter(|| test(phf)));
+    c.bench_function("static_map", |b| b.iter(|| test(static_map)));
+    c.bench_function("trie_u8", |b| b.iter(|| test(trie_u8)));
+    c.bench_function("trie_u8_u32", |b| b.iter(|| test(trie_u8_u32)));
+    c.bench_function("trie_u32_u8", |b| b.iter(|| test(trie_u32_u8)));
 }
 
-#[bench]
-fn bench_trie_u8(b: &mut Bencher) {
-    b.iter(|| test(trie_u8));
-}
-
-#[bench]
-fn bench_trie_u8_u32(b: &mut Bencher) {
-    b.iter(|| test(trie_u8_u32));
-}
-
-#[bench]
-fn bench_trie_u32_u8(b: &mut Bencher) {
-    b.iter(|| test(trie_u32_u8));
-}
-
-#[bench]
-fn bench_phf(b: &mut Bencher) {
-    b.iter(|| test(phf));
-}
+criterion_group!(benches, bench);
+criterion_main!(benches);

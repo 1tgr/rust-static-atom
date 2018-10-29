@@ -6,6 +6,15 @@ authors = ["Tim Robinson <tim.g.robinson@gmail.com>"]
 [dependencies]
 phf = "0.7"
 phf_macros = "0.7"
+static_map = "0.1"
+static_map_macros = "0.1"
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "bench"
+harness = false
 
 [profile.release]
 codegen-units = 1
