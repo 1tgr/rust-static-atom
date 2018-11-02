@@ -8,19 +8,17 @@ use std::num::NonZeroU8;
 use criterion::Criterion;
 use static_atom::*;
 
-fn assert_eq<T: std::fmt::Debug + Eq>(a: T, b: T) {
-    assert_eq!(a, b);
-    criterion::black_box(a);
-    criterion::black_box(b);
-}
-
 fn test(parser: impl Fn(&str) -> Option<NonZeroU8>) {
-    assert_eq(Some(1), parser("BTC-EUR").map(NonZeroU8::get));
-    assert_eq(Some(2), parser("ETH-EUR").map(NonZeroU8::get));
-    assert_eq(Some(3), parser("ETH-BTC").map(NonZeroU8::get));
-    assert_eq(None, parser(""));
-    assert_eq(None, parser("ETH-"));
-    assert_eq(None, parser("ETH-EURzzz"));
+    let parser = |s| {
+        criterion::black_box(parser(criterion::black_box(s)))
+    };
+
+    assert_eq!(Some(1), parser("BTC-EUR").map(NonZeroU8::get));
+    assert_eq!(Some(2), parser("ETH-EUR").map(NonZeroU8::get));
+    assert_eq!(Some(3), parser("ETH-BTC").map(NonZeroU8::get));
+    assert_eq!(None, parser(""));
+    assert_eq!(None, parser("ETH-"));
+    assert_eq!(None, parser("ETH-EURzzz"));
 }
 
 fn bench(c: &mut Criterion) {
