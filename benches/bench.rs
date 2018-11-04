@@ -9,6 +9,7 @@ use static_atom::{small, Big, Small};
 fn match_keyword(s: &str) -> Result<Small, ()> {
     match s {
         "BTC-EUR" => Ok(small!("BTC-EUR")),
+        "BTC-USDC" => Ok(small!("BTC-USDC")),
         "ETH-EUR" => Ok(small!("ETH-EUR")),
         "ETH-BTC" => Ok(small!("ETH-BTC")),
         _ => Err(()),
@@ -41,8 +42,9 @@ fn bench(c: &mut Criterion) {
     };
 
     c.bench_functions("Valid 1", funs(), (Ok(0), "BTC-EUR"));
-    c.bench_functions("Valid 2", funs(), (Ok(1), "ETH-EUR"));
-    c.bench_functions("Valid 3", funs(), (Ok(2), "ETH-BTC"));
+    c.bench_functions("Valid 2", funs(), (Ok(1), "BTC-USDC"));
+    c.bench_functions("Valid 3", funs(), (Ok(2), "ETH-EUR"));
+    c.bench_functions("Valid 4", funs(), (Ok(3), "ETH-BTC"));
     c.bench_functions("Invalid empty", funs(), (Err(()), ""));
     c.bench_functions("Invalid too short", funs(), (Err(()), "ETH-"));
     c.bench_functions("Invalid too long", funs(), (Err(()), "ETH-EURzzz"));
