@@ -3,7 +3,7 @@ extern crate static_atom;
 
 use std::fmt;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Bencher, Criterion, Fun};
 use static_atom::{small, Big, Small};
 
 fn match_keyword(s: &str) -> Result<Small, ()> {
@@ -15,24 +15,37 @@ fn match_keyword(s: &str) -> Result<Small, ()> {
     }
 }
 
-fn test<T>(parser: impl Fn(&str) -> Result<T, ()>)
+fn test<F, T>(parser: F) -> impl FnMut(&mut Bencher, &(Result<usize, ()>, &str)) + 'static
 where
+    F: Fn(&str) -> Result<T, ()> + 'static,
     T: Into<usize> + PartialEq + fmt::Debug,
 {
-    let parser = |s| criterion::black_box(parser(criterion::black_box(s)));
-
-    assert_eq!(Ok(0), parser("BTC-EUR").map(Into::into));
-    assert_eq!(Ok(1), parser("ETH-EUR").map(Into::into));
-    assert_eq!(Ok(2), parser("ETH-BTC").map(Into::into));
-    assert_eq!(Err(()), parser(""));
-    assert_eq!(Err(()), parser("ETH-"));
-    assert_eq!(Err(()), parser("ETH-EURzzz"));
+    move |b, &(expected, s)| {
+        assert_eq!(expected, parser(s).map(Into::into));
+        b.iter(|| {
+            let s = criterion::black_box(s);
+            let _ = criterion::black_box(parser(s));
+        });
+    }
 }
 
 fn bench(c: &mut Criterion) {
-    c.bench_function("match_keyword", |b| b.iter(|| test(match_keyword)));
-    c.bench_function("trie_generated_small", |b| b.iter(|| test(str::parse::<Small>)));
-    c.bench_function("trie_generated_big", |b| b.iter(|| test(str::parse::<Big>)));
+    let funs = || -> Vec<Fun<(Result<usize, ()>, &str)>> {
+        vec![
+            Fun::new("match_keyword", test(match_keyword)),
+            Fun::new("trie_generated_small", test(str::parse::<Small>)),
+            Fun::new("trie_generated_big", test(str::parse::<Big>)),
+        ]
+    };
+
+    c.bench_functions("Valid 1", funs(), (Ok(0), "BTC-EUR"));
+    c.bench_functions("Valid 2", funs(), (Ok(1), "ETH-EUR"));
+    c.bench_functions("Valid 3", funs(), (Ok(2), "ETH-BTC"));
+    c.bench_functions("Invalid empty", funs(), (Err(()), ""));
+    c.bench_functions("Invalid too short", funs(), (Err(()), "ETH-"));
+    c.bench_functions("Invalid too long", funs(), (Err(()), "ETH-EURzzz"));
+    c.bench_functions("Invalid first char", funs(), (Err(()), "eTH-EUR"));
+    c.bench_functions("Invalid last char", funs(), (Err(()), "ETH-EUr"));
 }
 
 criterion_group!(benches, bench);
