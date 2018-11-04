@@ -4,12 +4,6 @@ version = "0.1.0"
 authors = ["Tim Robinson <tim.g.robinson@gmail.com>"]
 build = "build/build.rs"
 
-[dependencies]
-phf = "0.7"
-phf_macros = "0.7"
-static_map = "0.1"
-static_map_macros = "0.1"
-
 [build-dependencies]
 itertools = "0.7"
 

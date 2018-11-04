@@ -1,35 +1,38 @@
+extern crate criterion;
 extern crate static_atom;
 
-#[macro_use]
-extern crate criterion;
+use std::fmt;
 
-use std::num::NonZeroU8;
+use criterion::{criterion_group, criterion_main, Criterion};
+use static_atom::{small, Big, Small};
 
-use criterion::Criterion;
-use static_atom::*;
+fn match_keyword(s: &str) -> Result<Small, ()> {
+    match s {
+        "BTC-EUR" => Ok(small!("BTC-EUR")),
+        "ETH-EUR" => Ok(small!("ETH-EUR")),
+        "ETH-BTC" => Ok(small!("ETH-BTC")),
+        _ => Err(()),
+    }
+}
 
-fn test(parser: impl Fn(&str) -> Option<NonZeroU8>) {
-    let parser = |s| {
-        criterion::black_box(parser(criterion::black_box(s)))
-    };
+fn test<T>(parser: impl Fn(&str) -> Result<T, ()>)
+where
+    T: Into<usize> + PartialEq + fmt::Debug,
+{
+    let parser = |s| criterion::black_box(parser(criterion::black_box(s)));
 
-    assert_eq!(Some(1), parser("BTC-EUR").map(NonZeroU8::get));
-    assert_eq!(Some(2), parser("ETH-EUR").map(NonZeroU8::get));
-    assert_eq!(Some(3), parser("ETH-BTC").map(NonZeroU8::get));
-    assert_eq!(None, parser(""));
-    assert_eq!(None, parser("ETH-"));
-    assert_eq!(None, parser("ETH-EURzzz"));
+    assert_eq!(Ok(0), parser("BTC-EUR").map(Into::into));
+    assert_eq!(Ok(1), parser("ETH-EUR").map(Into::into));
+    assert_eq!(Ok(2), parser("ETH-BTC").map(Into::into));
+    assert_eq!(Err(()), parser(""));
+    assert_eq!(Err(()), parser("ETH-"));
+    assert_eq!(Err(()), parser("ETH-EURzzz"));
 }
 
 fn bench(c: &mut Criterion) {
     c.bench_function("match_keyword", |b| b.iter(|| test(match_keyword)));
-    c.bench_function("phf", |b| b.iter(|| test(phf)));
-    c.bench_function("static_map", |b| b.iter(|| test(static_map)));
-    c.bench_function("trie_u8", |b| b.iter(|| test(trie_u8)));
-    c.bench_function("trie_u8_u32", |b| b.iter(|| test(trie_u8_u32)));
-    c.bench_function("trie_u32_u8", |b| b.iter(|| test(trie_u32_u8)));
-    c.bench_function("trie_generated_small", |b| b.iter(|| test(small::from_str)));
-    c.bench_function("trie_generated_big", |b| b.iter(|| test(big::from_str)));
+    c.bench_function("trie_generated_small", |b| b.iter(|| test(str::parse::<Small>)));
+    c.bench_function("trie_generated_big", |b| b.iter(|| test(str::parse::<Big>)));
 }
 
 criterion_group!(benches, bench);
