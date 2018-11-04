@@ -22,8 +22,10 @@ where
 {
     move |b, &(expected, s)| {
         assert_eq!(expected, parser(s).map(Into::into));
+
+        let s = s.to_owned();
         b.iter(|| {
-            let s = criterion::black_box(s);
+            let s = criterion::black_box(&s);
             let _ = criterion::black_box(parser(s));
         });
     }
