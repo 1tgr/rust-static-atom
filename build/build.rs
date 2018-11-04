@@ -52,7 +52,7 @@ fn generate_inner(writer: &mut impl Write, lower_name: &str, atoms: Vec<(&[u8], 
 
         writeln!(
             writer,
-            "if let Some(()) = ArrayExpect::expect(&mut s, {prefix}) {{",
+            "if let Some(s) = s.expect({prefix}) {{",
             prefix = ByteStrDisplay(&prefix[..])
         )?;
 
@@ -118,8 +118,9 @@ fn generate(mut writer: impl Write, name: &str, atoms: Vec<&str>) -> Result<()> 
          impl FromStr for {name} {{
             type Err = ();
 
+            #[allow(unused_variables)]
             fn from_str(s: &str) -> Result<Self, ()> {{
-                let mut s = s.as_bytes();
+                let s = s.as_bytes();
                 match s.len() {{",
         name = name
     )?;

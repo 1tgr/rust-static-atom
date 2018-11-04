@@ -4,96 +4,99 @@ use std::fmt;
 use std::mem;
 use std::str::FromStr;
 
-#[inline]
-fn expect<'a, T: Copy + PartialEq>(s: &mut &[T], value: T) -> Option<()> {
-    if let Some(b) = s.first() {
-        if *b == value {
-            *s = &s[1..];
-            return Some(());
+trait Expect<T>: Sized {
+    fn expect(self, value: &T) -> Option<Self>;
+}
+
+impl<'a, T: PartialEq> Expect<T> for &'a [T] {
+    #[inline]
+    fn expect(self, value: &T) -> Option<Self> {
+        if let Some(b) = self.first() {
+            if b == value {
+                return Some(&self[1..]);
+            }
         }
-    }
 
-    None
-}
-
-trait ArrayExpect<T> {
-    fn expect(s: &mut &[T], a: &Self) -> Option<()>;
-}
-
-impl ArrayExpect<u8> for [u8; 1] {
-    #[inline]
-    fn expect(s: &mut &[u8], a: &[u8; 1]) -> Option<()> {
-        expect(s, a[0])
+        None
     }
 }
 
-impl ArrayExpect<u8> for [u8; 2] {
+impl<'a> Expect<[u8; 1]> for &'a [u8] {
     #[inline]
-    fn expect(s: &mut &[u8], a: &[u8; 2]) -> Option<()> {
-        let mut s2: &[u16] = unsafe { mem::transmute(*s) };
-        let a2: u16 = unsafe { mem::transmute(*a) };
-        expect(&mut s2, a2)?;
-        *s = &s[2..];
-        Some(())
+    fn expect(self, a: &[u8; 1]) -> Option<Self> {
+        self.expect(&a[0])
     }
 }
 
-impl ArrayExpect<u8> for [u8; 3] {
+impl<'a> Expect<[u8; 2]> for &'a [u8] {
     #[inline]
-    fn expect(s: &mut &[u8], a: &[u8; 3]) -> Option<()> {
-        ArrayExpect::expect(s, &[a[0], a[1]])?;
-        ArrayExpect::expect(s, &[a[2]])?;
-        Some(())
+    fn expect(self, a: &[u8; 2]) -> Option<Self> {
+        if self.len() < 2 {
+            return None;
+        }
+
+        let s2 = unsafe { mem::transmute::<&[u8], &[u16]>(self) };
+        let a2 = unsafe { mem::transmute::<[u8; 2], u16>(*a) };
+        s2.expect(&a2)?;
+        Some(&self[2..])
     }
 }
 
-impl ArrayExpect<u8> for [u8; 4] {
+impl<'a> Expect<[u8; 3]> for &'a [u8] {
     #[inline]
-    fn expect(s: &mut &[u8], a: &[u8; 4]) -> Option<()> {
-        let mut s4: &[u32] = unsafe { mem::transmute(*s) };
-        let a4: u32 = unsafe { mem::transmute(*a) };
-        expect(&mut s4, a4)?;
-        *s = &s[4..];
-        Some(())
+    fn expect(self, a: &[u8; 3]) -> Option<Self> {
+        self.expect(&[a[0], a[1]])?.expect(&[a[2]])
     }
 }
 
-impl ArrayExpect<u8> for [u8; 5] {
+impl<'a> Expect<[u8; 4]> for &'a [u8] {
     #[inline]
-    fn expect(s: &mut &[u8], a: &[u8; 5]) -> Option<()> {
-        ArrayExpect::expect(s, &[a[0], a[1], a[2], a[3]])?;
-        ArrayExpect::expect(s, &[a[4]])?;
-        Some(())
+    fn expect(self, a: &[u8; 4]) -> Option<Self> {
+        if self.len() < 4 {
+            return None;
+        }
+
+        let s4 = unsafe { mem::transmute::<&[u8], &[u32]>(self) };
+        let a4 = unsafe { mem::transmute::<[u8; 4], u32>(*a) };
+        s4.expect(&a4)?;
+        Some(&self[4..])
     }
 }
 
-impl ArrayExpect<u8> for [u8; 6] {
+impl<'a> Expect<[u8; 5]> for &'a [u8] {
     #[inline]
-    fn expect(s: &mut &[u8], a: &[u8; 6]) -> Option<()> {
-        ArrayExpect::expect(s, &[a[0], a[1], a[2], a[3]])?;
-        ArrayExpect::expect(s, &[a[4], a[5]])?;
-        Some(())
+    fn expect(self, a: &[u8; 5]) -> Option<Self> {
+        self.expect(&[a[0], a[1], a[2], a[3]])?.expect(&[a[4]])
     }
 }
 
-impl ArrayExpect<u8> for [u8; 7] {
+impl<'a> Expect<[u8; 6]> for &'a [u8] {
     #[inline]
-    fn expect(s: &mut &[u8], a: &[u8; 7]) -> Option<()> {
-        ArrayExpect::expect(s, &[a[0], a[1], a[2], a[3]])?;
-        ArrayExpect::expect(s, &[a[4], a[5]])?;
-        ArrayExpect::expect(s, &[a[6]])?;
-        Some(())
+    fn expect(self, a: &[u8; 6]) -> Option<Self> {
+        self.expect(&[a[0], a[1], a[2], a[3]])?.expect(&[a[4], a[5]])
     }
 }
 
-impl ArrayExpect<u8> for [u8; 8] {
+impl<'a> Expect<[u8; 7]> for &'a [u8] {
     #[inline]
-    fn expect(s: &mut &[u8], a: &[u8; 8]) -> Option<()> {
-        let mut s8: &[u64] = unsafe { mem::transmute(*s) };
-        let a8: u64 = unsafe { mem::transmute(a) };
-        expect(&mut s8, a8)?;
-        *s = &s[8..];
-        Some(())
+    fn expect(self, a: &[u8; 7]) -> Option<Self> {
+        self.expect(&[a[0], a[1], a[2], a[3]])?
+            .expect(&[a[4], a[5]])?
+            .expect(&[a[6]])
+    }
+}
+
+impl<'a> Expect<[u8; 8]> for &'a [u8] {
+    #[inline]
+    fn expect(self, a: &[u8; 8]) -> Option<Self> {
+        if self.len() < 8 {
+            return None;
+        }
+
+        let s8 = unsafe { mem::transmute::<&[u8], &[u64]>(self) };
+        let a8 = unsafe { mem::transmute::<[u8; 8], u64>(*a) };
+        s8.expect(&a8)?;
+        Some(&self[8..])
     }
 }
 
