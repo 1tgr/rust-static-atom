@@ -14,14 +14,18 @@ fn main() -> Result<(), Box<Error>> {
 
     build::generate(
         &mut file,
+        "atoms",
         "Small",
+        "small",
         vec!["BTC-EUR", "BTC-USDC", "ETH-EUR", "ETH-BTC"],
         vec!["Convention"],
     )?;
 
     build::generate(
         &mut file,
+        "atoms",
         "Big",
+        "big",
         vec![
             "BTC-EUR", "BTC-USDC", "ETH-EUR", "ETH-BTC", "ETH-USDC", "ETC-BTC", "ETC-EUR", "BTC-USD", "BCH-BTC",
             "BCH-USD", "BTC-GBP", "ETH-USD", "LTC-BTC", "LTC-EUR", "LTC-USD", "BCH-EUR", "ETC-USD", "ZRX-USD",

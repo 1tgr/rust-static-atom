@@ -4,7 +4,8 @@ extern crate crypto_example;
 use std::fmt;
 
 use criterion::{criterion_group, criterion_main, Bencher, Criterion, Fun};
-use crypto_example::{small, Big, Convention, ConventionVisitor, Small};
+use crypto_example::{small, Convention, ConventionVisitor};
+use crypto_example::atoms::{Big, Small};
 
 fn match_keyword(s: &str) -> Result<Small, ()> {
     match s {

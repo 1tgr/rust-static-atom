@@ -64,8 +64,19 @@ fn generate_inner<W: Write>(writer: &mut W, lower_name: &str, atoms: Vec<(&[u8],
     Ok(())
 }
 
-pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>, visitors: Vec<&str>) -> Result<()> {
-    let lower_name = name.to_lowercase();
+pub fn generate<W: Write>(
+    mut writer: W,
+    mod_name: &str,
+    name: &str,
+    lower_name: &str,
+    atoms: Vec<&str>,
+    visitors: Vec<&str>,
+) -> Result<()> {
+    let mod_name = if mod_name.is_empty() {
+        String::new()
+    } else {
+        mod_name.to_owned() + "::"
+    };
 
     let mut by_len = HashMap::new();
     for &s in atoms.iter() {
@@ -111,7 +122,8 @@ pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>, visitors:
     for (index, &s) in atoms.iter().enumerate() {
         writeln!(
             writer,
-            "({s:?}) => {{ $crate::{name}::_{index} }};",
+            "({s:?}) => {{ $crate::{mod_name}{name}::_{index} }};",
+            mod_name = mod_name,
             name = name,
             index = index,
             s = s
@@ -127,10 +139,12 @@ pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>, visitors:
         macro_rules! {lower_name}_type {{",
         lower_name = lower_name
     )?;
+
     for (index, &s) in atoms.iter().enumerate() {
         writeln!(
             writer,
-            "({s:?}) => {{ $crate::_{lower_name}_types::_{index} }};",
+            "({s:?}) => {{ $crate::{mod_name}_{lower_name}_types::_{index} }};",
+            mod_name = mod_name,
             lower_name = lower_name,
             index = index,
             s = s

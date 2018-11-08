@@ -3,8 +3,6 @@
 
 extern crate static_atom;
 
-include!(concat!(env!("OUT_DIR"), "/atoms.rs"));
-
 pub trait Convention {
     const PRICE_DIGITS: u32 = 2;
 }
@@ -15,14 +13,21 @@ pub trait ConventionVisitor {
     fn visit<C: Convention>(self) -> Self::Value;
 }
 
-impl Convention for small_type!("BTC-EUR") {}
+#[macro_use]
+pub mod atoms {
+    use super::{Convention, ConventionVisitor};
 
-impl Convention for small_type!("BTC-USDC") {}
+    include!(concat!(env!("OUT_DIR"), "/atoms.rs"));
 
-impl Convention for small_type!("ETH-EUR") {}
+    impl Convention for small_type!("BTC-EUR") {}
 
-impl Convention for small_type!("ETH-BTC") {
-    const PRICE_DIGITS: u32 = 5;
+    impl Convention for small_type!("BTC-USDC") {}
+
+    impl Convention for small_type!("ETH-EUR") {}
+
+    impl Convention for small_type!("ETH-BTC") {
+        const PRICE_DIGITS: u32 = 5;
+    }
 }
 
 pub fn quote_increment<C: Convention>() -> f64 {
