@@ -90,6 +90,7 @@ pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>, visitors:
         "\
         }}
 
+        #[doc(hide)]
         pub mod _{lower_name}_types {{",
         lower_name = lower_name
     )?;
@@ -240,6 +241,32 @@ pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>, visitors:
             }}
         }}
 
+        impl ::static_atom::TryFrom<usize> for {name} {{
+            type Err = ();
+
+            fn try_from(n: usize) -> Result<Self, ()> {{
+                match n {{",
+        name = name
+    )?;
+
+    for (index, s) in atoms.iter().enumerate() {
+        writeln!(
+            writer,
+            "{index} => Ok({lower_name}!({s:?})),",
+            lower_name = lower_name,
+            index = index,
+            s = s
+        )?;
+    }
+
+    writeln!(
+        writer,
+        "\
+                    _ => Err(()),
+                }}
+            }}
+        }}
+
         impl ::std::fmt::Debug for {name} {{
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{
                 write!(f, \"{lower_name}!({{}})\", self.as_str())
@@ -250,9 +277,51 @@ pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>, visitors:
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{
                 f.write_str(self.as_str())
             }}
-        }}",
+        }}
+
+        pub struct {name}Map<T>([Option<T>; {len}]);
+        
+        impl<T> {name}Map<T> {{
+            pub fn new() -> Self {{
+                {name}Map(Default::default())
+            }}
+        }}
+        
+        impl<T> ::static_atom::AtomMap for {name}Map<T> {{
+            type Key = {name};
+            type Value = T;
+        
+            fn entry(&self, key: {name}) -> &Option<T> {{
+                &self.0[usize::from(key)]
+            }}
+        
+            fn entry_mut(&mut self, key: {name}) -> &mut Option<T> {{
+                &mut self.0[usize::from(key)]
+            }}
+        
+            fn entries(&self) -> &[Option<T>] {{
+                &self.0
+            }}
+        
+            fn entries_mut(&mut self) -> &mut [Option<T>] {{
+                &mut self.0
+            }}
+        }}
+
+        impl<T> ::std::iter::FromIterator<({name}, T)> for {name}Map<T> {{
+            fn from_iter<I: ::std::iter::IntoIterator<Item = ({name}, T)>>(iter: I) -> Self {{
+                let mut map = {name}Map::new();
+                for (key, value) in iter {{
+                    map.0[usize::from(key)] = Some(value);
+                }}
+
+                map
+            }}
+        }}
+        ",
         lower_name = lower_name,
-        name = name
+        name = name,
+        len = atoms.len()
     )?;
 
     Ok(())

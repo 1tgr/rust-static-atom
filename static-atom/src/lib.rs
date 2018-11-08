@@ -2,10 +2,73 @@
 #![deny(unused_extern_crates)]
 
 extern crate itertools;
+extern crate try_from;
 
 pub mod build;
+pub mod iterators;
 
+use std::iter::FromIterator;
 use std::mem;
+
+use iterators::{Iter, IterMut, Keys, Values};
+
+pub use try_from::TryFrom;
+
+pub trait AtomMap: FromIterator<(<Self as AtomMap>::Key, <Self as AtomMap>::Value)> {
+    type Key: TryFrom<usize>;
+    type Value;
+
+    fn entry(&self, key: Self::Key) -> &Option<Self::Value>;
+    fn entry_mut(&mut self, key: Self::Key) -> &mut Option<Self::Value>;
+    fn entries(&self) -> &[Option<Self::Value>];
+    fn entries_mut(&mut self) -> &mut [Option<Self::Value>];
+
+    fn get(&self, key: Self::Key) -> Option<&Self::Value> {
+        self.entry(key).as_ref()
+    }
+
+    fn get_mut(&mut self, key: Self::Key) -> Option<&mut Self::Value> {
+        self.entry_mut(key).as_mut()
+    }
+
+    fn insert(&mut self, key: Self::Key, value: Self::Value) -> Option<Self::Value> {
+        mem::replace(self.entry_mut(key), Some(value))
+    }
+
+    fn get_or_insert(&mut self, key: Self::Key, value: Self::Value) -> &mut Self::Value {
+        let entry = self.entry_mut(key);
+        if entry.is_none() {
+            *entry = Some(value);
+        }
+
+        entry.as_mut().unwrap()
+    }
+
+    fn get_or_insert_with<F: FnOnce() -> Self::Value>(&mut self, key: Self::Key, f: F) -> &mut Self::Value {
+        let entry = self.entry_mut(key);
+        if entry.is_none() {
+            *entry = Some(f());
+        }
+
+        entry.as_mut().unwrap()
+    }
+
+    fn iter(&self) -> Iter<Self::Key, Self::Value> {
+        Iter::new(self.entries())
+    }
+
+    fn iter_mut(&mut self) -> IterMut<Self::Key, Self::Value> {
+        IterMut::new(self.entries_mut())
+    }
+
+    fn keys(&self) -> Keys<Self::Key, Self::Value> {
+        Keys::new(self.entries())
+    }
+
+    fn values(&self) -> iterators::Values<Self::Value> {
+        Values::new(self.entries())
+    }
+}
 
 pub trait Expect<T>: Sized {
     fn expect(self, value: &T) -> Option<Self>;

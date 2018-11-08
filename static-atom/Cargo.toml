@@ -5,3 +5,4 @@ authors = ["Tim Robinson <tim.g.robinson@gmail.com>"]
 
 [dependencies]
 itertools = "0.7"
+try_from = "0.2"

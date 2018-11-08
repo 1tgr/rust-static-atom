@@ -20,17 +20,16 @@ fn bench_consts(c: &mut Criterion) {
     fn test_quote_increment(b: &mut Bencher, input: &(f64, Small)) {
         struct Visitor<'a> {
             b: &'a mut Bencher,
-            expected: f64
+            expected: f64,
         };
 
         impl<'a> ConventionVisitor for Visitor<'a> {
             type Value = ();
 
             fn visit<C: Convention>(self) -> () {
-                assert_eq!(self.expected, crypto_example::quote_increment::<C>());
-                self.b.iter(|| {
-                    criterion::black_box(crypto_example::quote_increment::<C>())
-                })
+                let Visitor { b, expected } = self;
+                assert_eq!(expected, crypto_example::quote_increment::<C>());
+                b.iter(|| criterion::black_box(crypto_example::quote_increment::<C>()))
             }
         }
 
