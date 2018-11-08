@@ -1,12 +1,7 @@
-extern crate itertools;
-
 use std::collections::HashMap;
-use std::env;
 use std::error;
 use std::fmt;
-use std::fs::File;
 use std::io::Write;
-use std::path::Path;
 use std::result;
 use std::str;
 
@@ -26,7 +21,7 @@ impl<'a> fmt::Display for ByteStrDisplay<'a> {
     }
 }
 
-fn generate_inner(writer: &mut impl Write, lower_name: &str, atoms: Vec<(&[u8], &str)>) -> Result<()> {
+fn generate_inner<W: Write>(writer: &mut W, lower_name: &str, atoms: Vec<(&[u8], &str)>) -> Result<()> {
     for (_prefix_byte, mut atoms) in &atoms.into_iter().group_by(|&(s, _)| s[0]) {
         let mut atoms = atoms.collect_vec();
         let mut prefix = Vec::new();
@@ -69,7 +64,7 @@ fn generate_inner(writer: &mut impl Write, lower_name: &str, atoms: Vec<(&[u8], 
     Ok(())
 }
 
-fn generate(mut writer: impl Write, name: &str, atoms: Vec<&str>) -> Result<()> {
+pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>) -> Result<()> {
     let lower_name = name.to_lowercase();
 
     let mut by_len = HashMap::new();
@@ -115,11 +110,13 @@ fn generate(mut writer: impl Write, name: &str, atoms: Vec<&str>) -> Result<()> 
         "\
          }}
 
-         impl FromStr for {name} {{
+         impl ::std::str::FromStr for {name} {{
             type Err = ();
 
             #[allow(unused_variables)]
-            fn from_str(s: &str) -> Result<Self, ()> {{
+            fn from_str(s: &str) -> ::std::result::Result<Self, ()> {{
+                use ::static_atom::Expect;
+
                 let s = s.as_bytes();
                 match s.len() {{",
         name = name
@@ -180,14 +177,14 @@ fn generate(mut writer: impl Write, name: &str, atoms: Vec<&str>) -> Result<()> 
             }}
         }}
 
-        impl fmt::Debug for {name} {{
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{
+        impl ::std::fmt::Debug for {name} {{
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{
                 write!(f, \"{lower_name}!({{}})\", self.as_str())
             }}
         }}
 
-        impl fmt::Display for {name} {{
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{
+        impl ::std::fmt::Display for {name} {{
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{
                 f.write_str(self.as_str())
             }}
         }}",
@@ -195,23 +192,5 @@ fn generate(mut writer: impl Write, name: &str, atoms: Vec<&str>) -> Result<()> 
         name = name
     )?;
 
-    Ok(())
-}
-
-fn main() -> Result<()> {
-    let filename = Path::new(&env::var("OUT_DIR")?).join("atoms.rs");
-    let mut file = File::create(filename)?;
-
-    generate(&mut file, "Small", vec!["BTC-EUR", "BTC-USDC", "ETH-EUR", "ETH-BTC"])?;
-
-    generate(
-        &mut file,
-        "Big",
-        vec![
-            "BTC-EUR", "BTC-USDC", "ETH-EUR", "ETH-BTC", "ETH-USDC", "ETC-BTC", "ETC-EUR", "BTC-USD", "BCH-BTC",
-            "BCH-USD", "BTC-GBP", "ETH-USD", "LTC-BTC", "LTC-EUR", "LTC-USD", "BCH-EUR", "ETC-USD", "ZRX-USD",
-            "ZRX-BTC", "ZRX-EUR", "ETC-GBP", "ETH-GBP", "LTC-GBP", "BCH-GBP",
-        ],
-    )?;
     Ok(())
 }

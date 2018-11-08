@@ -1,0 +1,18 @@
+[package]
+name = "crypto-example"
+version = "0.1.0"
+authors = ["Tim Robinson <tim.g.robinson@gmail.com>"]
+build = "build/build.rs"
+
+[dependencies]
+static-atom = { path = "../../static-atom" }
+
+[build-dependencies]
+static-atom = { path = "../../static-atom" }
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "bench"
+harness = false

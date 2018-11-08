@@ -1,10 +1,13 @@
 #![deny(warnings)]
+#![deny(unused_extern_crates)]
 
-use std::fmt;
+extern crate itertools;
+
+pub mod build;
+
 use std::mem;
-use std::str::FromStr;
 
-trait Expect<T>: Sized {
+pub trait Expect<T>: Sized {
     fn expect(self, value: &T) -> Option<Self>;
 }
 
@@ -99,5 +102,3 @@ impl<'a> Expect<[u8; 8]> for &'a [u8] {
         Some(&self[8..])
     }
 }
-
-include!(concat!(env!("OUT_DIR"), "/atoms.rs"));
