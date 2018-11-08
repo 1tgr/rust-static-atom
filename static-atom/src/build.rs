@@ -64,7 +64,7 @@ fn generate_inner<W: Write>(writer: &mut W, lower_name: &str, atoms: Vec<(&[u8],
     Ok(())
 }
 
-pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>) -> Result<()> {
+pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>, visitors: Vec<&str>) -> Result<()> {
     let lower_name = name.to_lowercase();
 
     let mut by_len = HashMap::new();
@@ -90,16 +90,47 @@ pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>) -> Result
         "\
         }}
 
+        pub mod _{lower_name}_types {{",
+        lower_name = lower_name
+    )?;
+
+    for (index, &s) in atoms.iter().enumerate() {
+        writeln!(writer, "pub struct _{index}; // {s:?}", index = index, s = s);
+    }
+
+    writeln!(
+        writer,
+        "\
+        }}
+
         #[macro_export]
         macro_rules! {lower_name} {{",
         lower_name = lower_name
     )?;
-
     for (index, &s) in atoms.iter().enumerate() {
         writeln!(
             writer,
             "({s:?}) => {{ $crate::{name}::_{index} }};",
             name = name,
+            index = index,
+            s = s
+        )?;
+    }
+
+    writeln!(
+        writer,
+        "\
+        }}
+
+        #[macro_export]
+        macro_rules! {lower_name}_type {{",
+        lower_name = lower_name
+    )?;
+    for (index, &s) in atoms.iter().enumerate() {
+        writeln!(
+            writer,
+            "({s:?}) => {{ $crate::_{lower_name}_types::_{index} }};",
+            lower_name = lower_name,
             index = index,
             s = s
         )?;
@@ -151,7 +182,39 @@ pub fn generate<W: Write>(mut writer: W, name: &str, atoms: Vec<&str>) -> Result
         writer,
         "\
                 }}
-            }}
+            }}"
+    )?;
+
+    for visitor in visitors.iter() {
+        writeln!(
+            writer,
+            "\
+            pub fn visit_{lower_visitor}<V: {visitor}Visitor>(self, visitor: V) -> V::Value {{
+                match self {{",
+            visitor = visitor,
+            lower_visitor = visitor.to_lowercase(),
+        )?;
+
+        for s in atoms.iter() {
+            writeln!(
+                writer,
+                "{lower_name}!({s:?}) => visitor.visit::<{lower_name}_type!({s:?})>(),",
+                lower_name = lower_name,
+                s = s,
+            )?;
+        }
+
+        writeln!(
+            writer,
+            "\
+                }}
+            }}"
+        )?;
+    }
+
+    writeln!(
+        writer,
+        "\
         }}
 
         impl From<{name}> for usize {{

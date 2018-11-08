@@ -12,7 +12,12 @@ fn main() -> Result<(), Box<Error>> {
     let filename = Path::new(&env::var("OUT_DIR")?).join("atoms.rs");
     let mut file = File::create(filename)?;
 
-    build::generate(&mut file, "Small", vec!["BTC-EUR", "BTC-USDC", "ETH-EUR", "ETH-BTC"])?;
+    build::generate(
+        &mut file,
+        "Small",
+        vec!["BTC-EUR", "BTC-USDC", "ETH-EUR", "ETH-BTC"],
+        vec!["Convention"],
+    )?;
 
     build::generate(
         &mut file,
@@ -22,6 +27,7 @@ fn main() -> Result<(), Box<Error>> {
             "BCH-USD", "BTC-GBP", "ETH-USD", "LTC-BTC", "LTC-EUR", "LTC-USD", "BCH-EUR", "ETC-USD", "ZRX-USD",
             "ZRX-BTC", "ZRX-EUR", "ETC-GBP", "ETH-GBP", "LTC-GBP", "BCH-GBP",
         ],
+        vec![],
     )?;
     Ok(())
 }
