@@ -5,6 +5,7 @@ authors = ["Tim Robinson <tim.g.robinson@gmail.com>"]
 build = "build/build.rs"
 
 [dependencies]
+serde = "1"
 static-atom = { path = "../../static-atom" }
 
 [build-dependencies]

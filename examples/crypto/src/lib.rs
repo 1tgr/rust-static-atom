@@ -1,6 +1,7 @@
 #![deny(warnings)]
 #![deny(unused_extern_crates)]
 
+extern crate serde;
 extern crate static_atom;
 
 pub trait Convention {

@@ -279,8 +279,36 @@ pub fn generate<W: Write>(
                     _ => Err(()),
                 }}
             }}
-        }}
+        }}"
+    );
 
+    #[cfg(feature = "serde")]
+    {
+        writeln!(
+            writer,
+            "\
+            impl ::serde::Serialize for {name} {{
+                fn serialize<S: ::serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {{
+                    self.as_str().serialize(serializer)
+                }}
+            }}
+
+            impl<'de> ::serde::Deserialize<'de> for {name} {{
+                fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {{
+                    use serde::de::Error;
+
+                    <&str>::deserialize(deserializer).and_then(|s| {{
+                        s.parse().map_err(|()| Error::custom(format!(\"can't parse {{}} as {name}\", s)))
+                    }})
+                }}
+            }}",
+            name = name
+        );
+    }
+
+    writeln!(
+        writer,
+        "\
         impl ::std::fmt::Debug for {name} {{
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{
                 write!(f, \"{lower_name}!({{}})\", self.as_str())
