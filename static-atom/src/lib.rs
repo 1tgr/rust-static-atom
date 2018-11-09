@@ -35,6 +35,10 @@ pub trait AtomMap: FromIterator<(<Self as AtomMap>::Key, <Self as AtomMap>::Valu
         mem::replace(self.entry_mut(key), Some(value))
     }
 
+    fn remove(&mut self, key: Self::Key) -> Option<Self::Value> {
+        mem::replace(self.entry_mut(key), None)
+    }
+
     fn get_or_insert(&mut self, key: Self::Key, value: Self::Value) -> &mut Self::Value {
         let entry = self.entry_mut(key);
         if entry.is_none() {
