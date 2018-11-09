@@ -87,7 +87,7 @@ pub fn generate<W: Write>(
     writeln!(
         writer,
         "\
-        #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+        #[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
         pub enum {name} {{",
         name = name
     );
@@ -293,6 +293,7 @@ pub fn generate<W: Write>(
             }}
         }}
 
+        #[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
         pub struct {name}Map<T>([Option<T>; {len}]);
         
         impl<T> {name}Map<T> {{
