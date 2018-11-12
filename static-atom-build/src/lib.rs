@@ -1,6 +1,7 @@
 #![deny(warnings)]
 #![deny(unused_extern_crates)]
 
+extern crate heck;
 extern crate itertools;
 
 use std::collections::HashMap;
@@ -10,6 +11,7 @@ use std::io::Write;
 use std::result;
 use std::str;
 
+use heck::SnakeCase;
 use itertools::Itertools;
 
 type Result<T> = result::Result<T, Box<error::Error>>;
@@ -73,7 +75,6 @@ pub fn generate<W: Write>(
     mut writer: W,
     mod_name: &str,
     name: &str,
-    lower_name: &str,
     atoms: Vec<&str>,
     visitors: Vec<&str>,
 ) -> Result<()> {
@@ -82,6 +83,12 @@ pub fn generate<W: Write>(
     } else {
         mod_name.to_owned() + "::"
     };
+
+    let lower_name = name.to_snake_case();
+    let visitors = visitors
+        .into_iter()
+        .map(|visitor| (visitor, visitor.to_snake_case()))
+        .collect_vec();
 
     let mut by_len = HashMap::new();
     for &s in atoms.iter() {
@@ -212,14 +219,14 @@ pub fn generate<W: Write>(
             }}"
     )?;
 
-    for visitor in visitors.iter() {
+    for &(visitor, ref lower_visitor) in visitors.iter() {
         writeln!(
             writer,
             "\
             pub fn visit_{lower_visitor}<V: {visitor}Visitor>(self, visitor: V) -> V::Value {{
                 match self {{",
             visitor = visitor,
-            lower_visitor = visitor.to_lowercase(),
+            lower_visitor = lower_visitor,
         )?;
 
         for s in atoms.iter() {
