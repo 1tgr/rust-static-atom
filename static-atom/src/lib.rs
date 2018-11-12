@@ -48,7 +48,7 @@ pub trait AtomMap: FromIterator<(<Self as AtomMap>::Key, <Self as AtomMap>::Valu
         entry.as_mut().unwrap()
     }
 
-    fn get_or_insert_with<F: FnOnce() -> Self::Value>(&mut self, key: Self::Key, f: F) -> &mut Self::Value {
+    fn get_or_insert_with(&mut self, key: Self::Key, f: impl FnOnce() -> Self::Value) -> &mut Self::Value {
         let entry = self.entry_mut(key);
         if entry.is_none() {
             *entry = Some(f());
@@ -134,11 +134,10 @@ pub trait TypedAtomMap<M> {
         entry.as_mut().unwrap()
     }
 
-    fn get_or_insert_with<A, F>(&mut self, f: F) -> &mut <M as Mapping<A>>::Value
+    fn get_or_insert_with<A>(&mut self, f: impl FnOnce() -> <M as Mapping<A>>::Value) -> &mut <M as Mapping<A>>::Value
     where
         M: Mapping<A>,
         A: 'static,
-        F: FnOnce() -> <M as Mapping<A>>::Value,
     {
         let entry = self.entry_mut::<A>();
         if entry.is_none() {
