@@ -6,10 +6,10 @@ build = "build/build.rs"
 
 [dependencies]
 serde = "1"
-static-atom = { path = "../.." }
+static-atom = { path = "../../static-atom" }
 
 [build-dependencies]
-static-atom = { path = "../.." }
+static-atom = { path = "../../static-atom" }
 
 [dev-dependencies]
 criterion = "0.2"
