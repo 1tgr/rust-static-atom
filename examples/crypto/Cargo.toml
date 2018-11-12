@@ -10,7 +10,7 @@ static-atom = { path = "../../static-atom" }
 try_from = "0.2"
 
 [build-dependencies]
-static-atom = { path = "../../static-atom" }
+static-atom-build = { path = "../../static-atom-build" }
 
 [dev-dependencies]
 criterion = "0.2"

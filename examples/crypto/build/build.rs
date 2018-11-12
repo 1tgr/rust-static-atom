@@ -1,4 +1,4 @@
-extern crate static_atom;
+extern crate static_atom_build;
 
 use std::env;
 use std::error::Error;
@@ -6,13 +6,11 @@ use std::fs::File;
 use std::path::Path;
 use std::result::Result;
 
-use static_atom::build;
-
 fn main() -> Result<(), Box<Error>> {
     let filename = Path::new(&env::var("OUT_DIR")?).join("atoms.rs");
     let mut file = File::create(filename)?;
 
-    build::generate(
+    static_atom_build::generate(
         &mut file,
         "atoms",
         "Small",
@@ -21,7 +19,7 @@ fn main() -> Result<(), Box<Error>> {
         vec!["Convention"],
     )?;
 
-    build::generate(
+    static_atom_build::generate(
         &mut file,
         "atoms",
         "Big",

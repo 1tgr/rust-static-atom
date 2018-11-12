@@ -1,10 +1,8 @@
 #![deny(warnings)]
 #![deny(unused_extern_crates)]
 
-extern crate itertools;
 extern crate try_from;
 
-pub mod build;
 pub mod iterators;
 
 use std::iter::FromIterator;

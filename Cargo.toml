@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "examples/crypto",
-    "static-atom"
+    "static-atom",
+    "static-atom-build"
 ]
 
 [profile.release]

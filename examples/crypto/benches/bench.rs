@@ -8,8 +8,8 @@ use std::fmt;
 use criterion::{criterion_group, criterion_main, Bencher, Criterion, Fun};
 use crypto_example::{small, small_type, Convention, ConventionVisitor, Price, PriceMapping};
 use crypto_example::atoms::{Big, Small, TypedSmallMap};
-use try_from::TryFrom;
 use static_atom::TypedAtomMap;
+use try_from::TryFrom;
 
 fn match_keyword(s: &str) -> Result<Small, ()> {
     match s {

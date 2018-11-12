@@ -1,3 +1,8 @@
+#![deny(warnings)]
+#![deny(unused_extern_crates)]
+
+extern crate itertools;
+
 use std::collections::HashMap;
 use std::error;
 use std::fmt;

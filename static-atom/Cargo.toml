@@ -7,9 +7,4 @@ license = "MIT"
 repository = "https://github.com/1tgr/rust-static-atom"
 
 [dependencies]
-itertools = "0.7"
-serde = { version = "1", optional = true }
 try_from = "0.2"
-
-[features]
-default = ["serde"]
