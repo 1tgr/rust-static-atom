@@ -1,11 +1,19 @@
 #![deny(warnings)]
 #![deny(unused_extern_crates)]
+#![allow(dead_code)]
 
 extern crate serde;
 extern crate static_atom;
+extern crate try_from;
+
+use std::fmt;
+use std::marker::PhantomData;
+
+use static_atom::Mapping;
+use try_from::TryFrom;
 
 pub trait Convention {
-    const PRICE_DIGITS: u32 = 2;
+    const QUOTE_SIZE: f64 = 0.01;
 }
 
 pub trait ConventionVisitor {
@@ -27,10 +35,56 @@ pub mod atoms {
     impl Convention for small_type!("ETH-EUR") {}
 
     impl Convention for small_type!("ETH-BTC") {
-        const PRICE_DIGITS: u32 = 5;
+        const QUOTE_SIZE: f64 = 0.00001;
     }
 }
 
-pub fn quote_increment<C: Convention>() -> f64 {
-    f64::powi(10.0, -(C::PRICE_DIGITS as i32))
+pub fn price_digits<C: Convention>() -> i32 {
+    -C::QUOTE_SIZE.log10().ceil() as i32
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Price<C>(i32, PhantomData<C>);
+
+impl<C> fmt::Debug for Price<C>
+where
+    C: Convention,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Price({} * {})", self.0, C::QUOTE_SIZE)
+    }
+}
+
+impl<C> TryFrom<f64> for Price<C>
+where
+    C: Convention,
+{
+    type Err = ();
+
+    fn try_from(f: f64) -> Result<Self, ()> {
+        let g = f / C::QUOTE_SIZE;
+        if (g - g.round()).abs() < 1E-16 {
+            Ok(Price(g as i32, PhantomData))
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl<'a, C> From<&'a Price<C>> for f64
+where
+    C: Convention,
+{
+    fn from(p: &Price<C>) -> Self {
+        p.0 as f64 * C::QUOTE_SIZE
+    }
+}
+
+pub struct PriceMapping;
+
+impl<C> Mapping<C> for PriceMapping
+where
+    C: Convention,
+{
+    type Value = Price<C>;
 }

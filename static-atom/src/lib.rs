@@ -74,6 +74,81 @@ pub trait AtomMap: FromIterator<(<Self as AtomMap>::Key, <Self as AtomMap>::Valu
     }
 }
 
+pub trait Mapping<Atom> {
+    type Value;
+}
+
+pub trait TypedAtomMap<M> {
+    fn entry<A>(&self) -> &Option<<M as Mapping<A>>::Value>
+    where
+        M: Mapping<A>,
+        A: 'static;
+
+    fn entry_mut<A>(&mut self) -> &mut Option<<M as Mapping<A>>::Value>
+    where
+        M: Mapping<A>,
+        A: 'static;
+
+    fn get<A>(&self) -> Option<&<M as Mapping<A>>::Value>
+    where
+        M: Mapping<A>,
+        A: 'static,
+    {
+        self.entry::<A>().as_ref()
+    }
+
+    fn get_mut<A>(&mut self) -> Option<&mut <M as Mapping<A>>::Value>
+    where
+        M: Mapping<A>,
+        A: 'static,
+    {
+        self.entry_mut::<A>().as_mut()
+    }
+
+    fn insert<A>(&mut self, value: <M as Mapping<A>>::Value) -> Option<<M as Mapping<A>>::Value>
+    where
+        M: Mapping<A>,
+        A: 'static,
+    {
+        mem::replace(self.entry_mut::<A>(), Some(value))
+    }
+
+    fn remove<A>(&mut self) -> Option<<M as Mapping<A>>::Value>
+    where
+        M: Mapping<A>,
+        A: 'static,
+    {
+        mem::replace(self.entry_mut::<A>(), None)
+    }
+
+    fn get_or_insert<A>(&mut self, value: <M as Mapping<A>>::Value) -> &mut <M as Mapping<A>>::Value
+    where
+        M: Mapping<A>,
+        A: 'static,
+    {
+        let entry = self.entry_mut::<A>();
+        if entry.is_none() {
+            *entry = Some(value);
+        }
+
+        entry.as_mut().unwrap()
+    }
+
+    fn get_or_insert_with<A, F>(&mut self, f: F) -> &mut <M as Mapping<A>>::Value
+    where
+        M: Mapping<A>,
+        A: 'static,
+        F: FnOnce() -> <M as Mapping<A>>::Value,
+    {
+        let entry = self.entry_mut::<A>();
+        if entry.is_none() {
+            *entry = Some(f());
+        }
+
+        entry.as_mut().unwrap()
+    }
+}
+
 pub trait Expect<T>: Sized {
     fn expect(self, value: &T) -> Option<Self>;
 }

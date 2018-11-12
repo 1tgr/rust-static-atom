@@ -107,7 +107,14 @@ pub fn generate<W: Write>(
     )?;
 
     for (index, &s) in atoms.iter().enumerate() {
-        writeln!(writer, "pub struct _{index}; // {s:?}", index = index, s = s);
+        writeln!(
+            writer,
+            "\
+            #[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+            pub struct _{index}; // {s:?}",
+            index = index,
+            s = s
+        );
     }
 
     writeln!(
@@ -238,7 +245,7 @@ pub fn generate<W: Write>(
         name = name
     )?;
 
-    for (index, s) in atoms.iter().enumerate() {
+    for (index, &s) in atoms.iter().enumerate() {
         writeln!(
             writer,
             "{lower_name}!({s:?}) => {index},",
@@ -263,7 +270,7 @@ pub fn generate<W: Write>(
         name = name
     )?;
 
-    for (index, s) in atoms.iter().enumerate() {
+    for (index, &s) in atoms.iter().enumerate() {
         writeln!(
             writer,
             "{index} => Ok({lower_name}!({s:?})),",
@@ -305,6 +312,17 @@ pub fn generate<W: Write>(
             name = name
         );
     }
+
+    let where_mapping = atoms
+        .iter()
+        .map(|&s| {
+            format!(
+                "M: ::static_atom::Mapping<{lower_name}_type!({s:?})>",
+                lower_name = lower_name,
+                s = s
+            )
+        })
+        .join("\n,");
 
     writeln!(
         writer,
@@ -361,11 +379,121 @@ pub fn generate<W: Write>(
                 map
             }}
         }}
-        ",
+
+        pub struct Typed{name}Map<M>
+        where {where_mapping}
+        {{",
         lower_name = lower_name,
         name = name,
-        len = atoms.len()
+        len = atoms.len(),
+        where_mapping = where_mapping
     )?;
+
+    for (index, &s) in atoms.iter().enumerate() {
+        writeln!(
+            writer,
+            "_{index}: Option<<M as ::static_atom::Mapping<{lower_name}_type!({s:?})>>::Value>,",
+            index = index,
+            lower_name = lower_name,
+            s = s
+        )?;
+    }
+
+    writeln!(
+        writer,
+        "\
+        }}
+
+        impl<M> Typed{name}Map<M>
+        where {where_mapping}
+        {{
+            pub fn new() -> Self {{
+                Typed{name}Map {{",
+        name = name,
+        where_mapping = where_mapping
+    )?;
+
+    for (index, &s) in atoms.iter().enumerate() {
+        writeln!(writer, "_{index}: None, // {s:?}", index = index, s = s)?;
+    }
+
+    writeln!(
+        writer,
+        "\
+                }}
+            }}
+        }}
+
+        impl<M> ::static_atom::TypedAtomMap<M> for Typed{name}Map<M>
+        where {where_mapping}
+        {{
+            fn entry<A>(&self) -> &Option<<M as ::static_atom::Mapping<A>>::Value>
+            where
+                M: ::static_atom::Mapping<A>,
+                A: 'static,
+            {{
+                use std::any::TypeId;
+                use std::mem;
+
+                let id = TypeId::of::<A>();",
+        name = name,
+        where_mapping = where_mapping
+    )?;
+
+    for (index, &s) in atoms.iter().enumerate() {
+        write!(
+            writer,
+            "\
+            if id == TypeId::of::<{lower_name}_type!({s:?})>() {{
+                unsafe {{ mem::transmute(&self._{index}) }}
+            }} else ",
+            lower_name = lower_name,
+            index = index,
+            s = s
+        )?;
+    }
+
+    writeln!(
+        writer,
+        "\
+                {{
+                    unreachable!()
+                }}
+            }}
+
+            fn entry_mut<A>(&mut self) -> &mut Option<<M as ::static_atom::Mapping<A>>::Value>
+            where
+                M: ::static_atom::Mapping<A>,
+                A: 'static,
+            {{
+                use std::any::TypeId;
+                use std::mem;
+
+                let id = TypeId::of::<A>();"
+    )?;
+
+    for (index, &s) in atoms.iter().enumerate() {
+        write!(
+            writer,
+            "\
+            if id == TypeId::of::<{lower_name}_type!({s:?})>() {{
+                unsafe {{ mem::transmute(&mut self._{index}) }}
+            }} else ",
+            lower_name = lower_name,
+            index = index,
+            s = s
+        )?;
+    }
+
+    writeln!(
+        writer,
+        "\
+                {{
+                    unreachable!()
+                }}
+            }}
+        }}"
+    );
 
     Ok(())
 }
