@@ -1,10 +1,11 @@
 [package]
 name = "static-atom"
 description = "Fast parsing from a set of strings known at compile time"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Tim Robinson <tim.g.robinson@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/1tgr/rust-static-atom"
+edition = "2018"
 
 [dependencies]
 try_from = "0.2"

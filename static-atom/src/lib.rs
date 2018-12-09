@@ -1,14 +1,11 @@
 #![deny(warnings)]
-#![deny(unused_extern_crates)]
-
-extern crate try_from;
 
 pub mod iterators;
 
 use std::iter::FromIterator;
 use std::mem;
 
-use iterators::{Iter, IterMut, Keys, Values};
+use crate::iterators::{Iter, IterMut, Keys, Values};
 
 pub use try_from::TryFrom;
 

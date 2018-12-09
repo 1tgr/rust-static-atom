@@ -1,10 +1,11 @@
 [package]
 name = "static-atom-build"
 description = "Glue between your build script and the static-atom crate"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Tim Robinson <tim.g.robinson@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/1tgr/rust-static-atom"
+edition = "2018"
 
 [dependencies]
 heck = "0.3"

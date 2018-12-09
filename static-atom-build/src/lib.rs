@@ -1,8 +1,4 @@
 #![deny(warnings)]
-#![deny(unused_extern_crates)]
-
-extern crate heck;
-extern crate itertools;
 
 use std::collections::HashMap;
 use std::error;
@@ -29,7 +25,7 @@ impl<'a> fmt::Display for ByteStrDisplay<'a> {
 }
 
 fn generate_inner<W: Write>(writer: &mut W, lower_name: &str, atoms: Vec<(&[u8], &str)>) -> Result<()> {
-    for (_prefix_byte, mut atoms) in &atoms.into_iter().group_by(|&(s, _)| s[0]) {
+    for (_prefix_byte, atoms) in &atoms.into_iter().group_by(|&(s, _)| s[0]) {
         let mut atoms = atoms.collect_vec();
         let mut prefix = Vec::new();
 
@@ -102,10 +98,10 @@ pub fn generate<W: Write>(
         #[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
         pub enum {name} {{",
         name = name
-    );
+    )?;
 
     for (index, &s) in atoms.iter().enumerate() {
-        writeln!(writer, "_{index}, // {s:?}", index = index, s = s);
+        writeln!(writer, "_{index}, // {s:?}", index = index, s = s)?;
     }
 
     writeln!(
@@ -126,7 +122,7 @@ pub fn generate<W: Write>(
             pub struct _{index}; // {s:?}",
             index = index,
             s = s
-        );
+        )?;
     }
 
     writeln!(
@@ -299,7 +295,7 @@ pub fn generate<W: Write>(
                 }}
             }}
         }}"
-    );
+    )?;
 
     #[cfg(feature = "serde")]
     {
@@ -322,7 +318,7 @@ pub fn generate<W: Write>(
                 }}
             }}",
             name = name
-        );
+        )?;
     }
 
     let where_mapping = atoms
@@ -505,7 +501,7 @@ pub fn generate<W: Write>(
                 }}
             }}
         }}"
-    );
+    )?;
 
     Ok(())
 }

@@ -1,10 +1,4 @@
 #![deny(warnings)]
-#![deny(unused_extern_crates)]
-#![allow(dead_code)]
-
-extern crate serde;
-extern crate static_atom;
-extern crate try_from;
 
 use std::fmt;
 use std::marker::PhantomData;
